@@ -12,21 +12,27 @@ class Parser
     @entries.sort_by! { |x| x.length }.reverse!
   end
 
-  def parse(input, partial = [], &block)
-    if input.empty?
-      block.call(partial)
-      return
-    end
+  def parse(input, partial = [])
+    return [partial] if input.empty?
 
     parts = input.split("'")
 
-    return parts.map { |p| parse(p) }.flatten unless parts.length == 1
+    if parts.length > 1
+      first = parse(parts.first, [])
+      second = parse(parts[1...parts.length].join("'"))
+
+      return first.product(second).collect { |x, y| x + y }
+    end
+
+    results = []
 
     @entries.each do |token|
       if input[0...token.length] == token
-        parse(input[token.length...input.length], partial + [token], &block)
+        results += parse(input[token.length...input.length], partial + [token])
       end
     end
+
+    results
   end
 
 end
